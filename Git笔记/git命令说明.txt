@@ -1,0 +1,61 @@
+Git 常用指令
+git init      创建一个空的 Git 仓库或重新初始化一个已存在的仓库
+git clone []  克隆一个仓库到一个新目录 [克隆地址] （下载一个项目和他的整个历史代码）
+git pull      取回远程仓库的变化并和本地合并
+git add []    添加当前目录的所有文件到暂存区（ [.] 暂存全部，也可以是 [文件或目录]）
+git commit -m [] 提交暂存区到仓库区（ -m [版本说明] 创建一个版本，并添加版本说明）
+git push      推送代码到远程库
+git diff      显示缓存区和工作区的差异
+git checkout  切换到指定的分支
+git fetch     下载远程仓库的所有变动
+git merge     合并指定分支到当前分支
+
+检查历史和状态
+git log                  显示提交日志（查看版本信息）
+git log --pretty=oneline 以简短方式显示版本信息
+git reset --hard []      恢复到指定的一个版本
+创建的最新版本为 HEAD， HEAD 前一个版本为 HEAD^ 前2个版本为 HEAD^^ 以此类推。还有一种表述方法为: 前一个版本 HEAD~1 前2个版本 HEAD~2 以此类推
+如果恢复到后面的版本需要填写 commit 编号
+
+show                 显示各种类型的对象
+grep                 输出和模式匹配的行
+git reflog           查看操作记录（包括 commit 编号，前7位）
+git status           查看当前工作区的状态
+git checkout -- []   丢弃工作区的改动 [文件名]
+
+diff                 显示提交之间、提交和工作区之间等的差异
+git diff HEAD -- []  对比工作区和仓库中的版本文件的不同 [文件名]
+git diff HEAD^ -- [] 对比两个版本中的文件 [文件名]
+
+mv []                移动或重命名一个文件、目录或符号链接
+rm []                普通删除文件 [文件名]
+git rm []            删除文件并提交到暂存区 [文件名]
+
+
+Git 分支
+branch              列出、创建或删除分支
+gir branch          查看当前有几个分支，并且在那个分支下工作
+gir branch []       新建分支， [分支名]
+git branch -d []    删除已合并的的分支 [分支名]
+git branch -D []    删除未合并的的分支 [分支名]
+
+git checkout []     切换分支（切换到 [分支名] 分支）
+git checkout -b []  新建并切换分支（切换到 [分支名] 分支）
+merge               合并两个或更多开发历史
+git merge dev       合并分支 dev
+
+
+
+
+
+
+
+
+
+
+
+Git 配置
+git config --global core.quotepath false  配置通过终端显示中文文件名
+ssh-keygen -t rsa -C 'bzt2011@foxmail.com' 生成 ssh 协议秘钥
+
+

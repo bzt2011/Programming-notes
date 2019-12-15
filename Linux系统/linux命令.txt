@@ -1,0 +1,252 @@
+linux命令	
+
+man       Linux系统帮助手册   
+man man  查看当前系统的所有帮助手册说明  
+
+    1    可执行程序或 shell 命令
+     
+    2    系统调用(内核提供的函数)
+      
+    3    库调用(程序库中的函数)      前三个章节的手册是默认标配的后面的需要自己安装----     
+   
+    4    特殊文件(通常位于 /dev)     
+    5    文件格式和规范，如 /etc/passwd      
+    6    游戏   
+    7    杂项(包括宏包和规范，如 man(7)，groff(7))     
+    8    系统管理命令(通常只针对 root 用户)   
+    9    内核例程 [非标准
+例如：查看strcmp 函数的使用 
+man 3  strcmp
+man 1  ls 
+
+
+tar   压缩和解压命令
+  z   对应gz后缀压缩包
+  j   对应bz2后缀压缩包
+  c   压缩命令
+  x   解压词缀
+  v   显示步骤 
+  f   固定词缀，必须添加
+tar zxvf VMwareTools-10.2.0-7259539.tar.gz 
+当需要解压的文件是gz时，中间的参数是zxvf
+当需要解压的文件是bz2时，中间的参数是jxvf
+例子   对一个文件进行压缩    tar -czvf  test1.tar.bz  test1/ 
+例子   对一个压缩包进行解压  tar -xzvf  test1.tar.bz
+
+
+ls        查看当前目录下的文件名  
+ls -a     查看当前目录下的文件名 (包括隐藏文件，在linux系统中隐藏文件以.开头)
+ls -l     查看文件的详细属性    
+
+cd        进入一个目录（文件夹，不需要把文件夹名称全部敲完，可以使用tab键进行补全）    
+cd ~      快速进入家目录
+cd ..     返回上一级目录  （.当前目录  cd ..上一级目录） 
+cd  -     返回上次进入的目录
+/         根目录
+./        表示当前路径（一定是相对路径）   
+../       表示上一层文件夹   
+pwd       输出当前的路径名称（获取当前目录） 
+echo      输出显示的数据    例子：echo  $PATH    查看变量的名称 
+ 
+cat       读取一个文本中的数据  
+
+mkdir     创建一个目录（文件夹）  
+mkdir -p  创建多级目录
+touch     创建一个普通文件  
+
+cp        拷贝一个文件   cp  hello.c  hello2.c
+cp -R     拷贝一个目录   cp  dir   dir2   -R  
+
+mv        移动或重命名一个目录或文件   
+rm        删除一个文件或目录
+rmdir     删除文件夹    
+						 
+
+alias          给命令起别名   例子：alias  c='clear'
+find           查找一个文件   例子：find  /home/gec   -name   "test1"
+which          查看工具的所在路径 
+sudo           表示使用管理员权限
+sudo -s        切换到管理员用户
+
+su gec（用户名）  切换回gec普通用户
+gec@ubuntu:/$     这是gec普通用户
+root@ubuntu:/#    这是root管理员用户
+
+reboot            重启ubuntu系统
+shutdown          关机命令
+shutdown -h now   马上关机 
+chmod             获取权限    chmod 777 +文件名： 表示将文件修改成可读可写可执行的文件
+
+
+
+clear    清屏
+alias    取别名    如：alias c=clear--->表示接下来的linux下，输入字母c，等价于使用了clear命令（临时的） 
+source   重启某个配置脚本     
+echo     打印字符串
+
+
+
+
+打开环境配置文件
+vim .bashrc              打开当前目录下的.bashrc
+vim /home/gec/.bashrc    打开家目录下的.bashrc
+
+在文件末尾添加    alias 'c=clear'  （给 clear 取别名为 c）
+
+重启配置文件    source .bashrc
+.bashrc是每一次打开terminal终端的时候，都被再启动一次
+
+
+linux下特殊字符
+>file	把数据重定向到file文件中，清空写入  如： echo "helloworld" > test1
+>>file	把数据重新定向到file中，追加写入    如： echo "nihao" >> test1
+<file	从file文件输出数据                 如： &>file      将错误信息输入到file文件中
+
+
+ *      表示任意长度的任意文件
+ls *    表示当前文件夹下所有文件
+ls 2*   表示查找第一个字母为‘2’的所有文件
+ ?      表示一个字节长度的文件
+[]      表示匹配只符合[]内条件的文件  [] 内的数据只能够是0~9 A~Z a~z  因为[]内匹配的是字符，也就是不能超过ASCII的字符数值
+
+linux系统的文件权限 
+chmod  修改文件的权限 
+
+sudo chmod -R 777 文件名  获取文件夹下所有文件的权限 
+
+例子： chmod  [ugoa]+/-[rwx]  文件名
+              u  文件所有者 
+              g  文件所属组 
+              o  其他用户
+              a  所有  
+	  
+例如：把所有人的可读权限去掉  chmod  a-r  文件名 
+
+推荐使用如下：利用：421BCD码去修改文件的权限 
+rwx rwx rwx  
+421 421 421
+例如：把所有人都加上可写可执行权限  chmod 333  文件名
+
+修改文件的所有者与所属组：  
+
+chown  所有者：所属组  文件名   例子：把文件的所有者改为gec 所属组改为 root    chown  gec:root  文件名
+特别提示！假设使用命令的时候提示，不允许的操作。则需要超级管理员权限去执行该命令  sudo  超级管理员命令  
+
+
+linux系统的用户管理： 
+
+sudo adduser 用户名    添加新的用户
+sudo su 用户名         切换用户 
+sudo userdel 用户名    删除用户 
+sudo passwd 用户名     修改用户密码 
+
+
+Linux系统进程管理命令：  相当于windos里面的任务管理器   
+
+ps   查看当前的进程pid号
+显示如下： 
+  PID TTY          TIME CMD
+ 3313 pts/4    00:00:00 bash
+
+ PID  进程的ID号，每一个进程都有唯一的一个PID号  
+ TTY  进程所占用的串口号   
+ TIME 时间  
+ CMD  进程的名称  
+
+---------------------------------------------------------
+ps -aux 查看当前的进程的详细信息
+ps      查看当前的进程： 
+ps -e   查看系统的所有进程： 
+ps -f   查看系统进程的详细信息： 
+top     查看进程所占用的设备信息： 例如CPU  内存 的使用情况  
+pstree  查看进程的家族关系  
+------------------------------------------------------------
+
+控制进程   
+
+kill 进程号           杀死进程  
+killall 进程名        杀死多个进程
+killall -STOP 进程名  暂停进程：      
+killall -CONT 进程名  继续运行进程：
+./进程名 &            后台运行
+
+
+linux系统自带的编辑器    gedit  可视化编辑工具    vi  命令编辑工具： 
+vi 文件名     编辑文件
+esc      命令模式
+dd       删除一行
+yy       复制一行  
+pp       粘贴一行 
+u        undo 撤销
+: 行号   跳转到第几行
+/字符串  查找字符串    n  向下查找    N  向上查找 
+
+ i       插入模式
+ o       插入模式
+ a       插入模式   
+
+
+sudo ifconfig +网卡名 + ip地址  修改ip地址  （ubuntu12.04默认网卡名是eth0  ubuntu16.04默认网卡名是ens33）
+ifconfig                       查看当前网络配置
+ping                           连接网络  （ 如ping www.baidu.com 或 ping 192.168.8.65 ）
+
+使用SSH 服务器：   
+在ubuntu输入  ssh root@192.168.8.65  （ root：6168开发板的的用户名。 192.168.8.65：开发板的IP地址）
+
+上传文件到开发板中
+scp 文件名 root@192.168.8.65:/  （:/开发板目录）
+
+scp  SSH_config.tar.bz  root@192.168.8.65:/  （示例）
+
+在开发板中挂 ubuntu的 NFS 文件夹   （NFS：网络中的计算机之间通过TCP/IP网络共享资源）
+mount -o nolock 对方的IP地址:/对方的服务器文件夹  /本地文件夹
+mount -o nolock 192.168.8.66:/home/tarena  /mnt   （192.168.8.66: Ubuntu的ip地址。/home/tarena: Ubuntu的目录）
+
+使用方法   
+mount  -o  nolock 192.168.8.65:/home/tarena  /tmp  （示例）
+sudo umount  /tmp  （卸载）
+
+
+设置时间
+date 查看系统日期
+
+
+将时间设置为2019年6月15日13点58分30秒（MMDDhhmmYYYY.ss）
+date 061519164713.30
+
+将时间设置为2014年6月18日14点16分30秒（MMDDhhmmYYYY.ss）
+date 0618141614.30       
+Wed Jun 18 14:16:33 UTC 2014
+
+date 0615120519.30  Sun Jun 15 19:16:30 UTC 2014
+date （月日时分年.秒）
+
+hwclock 命令查看硬件时间（对开发板有用）
+
+查看系统硬件时钟  hwclock 
+
+用法：hwclock [-r | --show] [-s | --hctosys] [-w | --systohc] [-t | --systz] [-l | --localtime] [-u | --utc ] [-f | --rtc FILE]
+
+查询和设置硬件时钟（RTC）
+
+-r显示硬件时钟时间
+-s从硬件时钟设置系统时间
+-w从系统时间设置硬件时钟
+-t设置内核时区，正确的系统时间
+如果硬件时钟在当地时间
+-u假设硬件时钟保持UTC
+-l假设硬件时钟保持在本地时间
+-f FILE使用指定的设备（例如/ dev / rtc2）
+
+
+
+
+
+
+
+
+
+
+
+
+

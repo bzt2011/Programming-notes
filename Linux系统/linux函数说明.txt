@@ -1,0 +1,739 @@
+
+创建一个进程
+#include <sys/types.h>
+#include <unistd.h>
+
+pid_t fork(void);
+fork 创建一个子进程
+	特点：
+		1，	复制父进程的资源到子进程中
+		2，	返回一个子进程的PID给父进程，返回一个0给子进程
+		3，	父进程跟子进程都是从fork调用完后跑起来
+
+
+pid_t vfork(void);
+vfork 创建一个子进程：
+	相对比于 fork ：
+		1，共享父进程的资源
+		2，父进程进入睡眠，一直等到子进程结束或者是调用 exec 系列函数
+		3，专门用来于exec系列函数配合使用
+	
+
+退出一个进程
+#include <stdlib.h>
+
+void exit(int status);
+exit 退出一个进程
+	
+	status 这个数据会 & 0377 再传出给（回收）接合这个子进程的程序
+	status 这个值一般不为负数（因为只保留了原数据的最低的8位传输出去）
+	
+	1，在退出进程前会先执行atexit或者是on_exit所登记的退出处理函数
+	2，清理IO缓冲区
+	_exit：直接退出进程，不会进行多余的操作
+
+3:
+#include <sys/types.h>
+#include <sys/wait.h>
+
+pid_t wait(int *wstatus);
+wait 等待接合
+
+pid_t waitpid(pid_t pid, int *wstatus, int options);
+	wait 等待任一子进程退出（阻塞等待）
+	
+	pid		>0：指定一个子进程等待回收
+			=0：回收跟调用这个函数的进程 同一个进程组 的子进程
+			-1：等待任一子进程退出（跟wait一样），只要是孩子就可以了，可以不同进程组
+			<-1：指定一个进程组ID为这个参数绝对值的子进程回收
+
+	wstatus	接收到的子进程的状态值：
+			具体参照书本356页 表5-5
+
+	options 操作附加参数
+		0：				正常引用该函数
+		WNOHANG：		不阻塞在这个函数
+		WUNTRACED：		子进程进入到暂停态时，报告其状态值
+		WCONTINUED：	子进程从暂停态出来（接收到SIGCONT）并且还没报告这个状态的状态值
+	
+返回值：
+		成功返回退出的子进程的pid，失败返回-1，返回0则是设置了非阻塞等待，其没有出错但是又没有子进程退出
+	
+
+
+4:
+#include <stdlib.h>
+
+atexit  on_exit  退出处理函数
+	特点：
+		1，退出处理函数允许多次登记，具备栈逻辑处理顺序
+		2，在进程调用exit函数的时候会去调用这两个函数所登记的处理函数
+
+int atexit(void (*function)(void));
+		function 要求你传输一个返回值是void，参数是void的函数指针（函数名）
+
+
+#include <stdlib.h>
+
+int on_exit(void (*function)(int , void *), void *arg);
+
+		function 要求你传输一个格式为这样的函数指针（函数名）
+		void  func_name(int status, void *arg)
+		{
+			。。。
+		}
+		其中 status 是 exit 函数里面的值，arg 是上面 arg 所传输过来的值
+		arg 会传输给 on_exit 所登记的 function 用做参数
+
+
+随堂练习：
+	先新建一个子进程，父进程先打印 "abc", 子进程再打印 "efg", 子进程在键盘中获取到字符 a ，则父进程打印“hello”，子进程获取 b 则打印“world”
+	并且父进程在任何情况下退出程序都打印一句“hahahaha”
+
+
+尝试引用第三方程序(execl系列函数)
+
+查看进程状态：
+		ps：给进程状态拍张照片
+					ps  -aux
+		
+		top：实时查看进程状态
+		
+		pstree：用树的形式罗列出进程亲属关系
+
+
+**********************************************************************
+		
+1:
+调用第三方应用程序
+
+#include <unistd.h>
+
+extern char **environ;//环境变量（可以通过它传输一个环境给另外一个启动的进程）
+
+int execl(const char *path, const char *arg, ...
+                       /* (char  *) NULL */);
+        path 指定一个应用程序的路径
+        arg... 要传输给应用程序的参数，这个参数必须要以NULL指针结尾
+                       
+int execlp(const char *file, const char *arg, ...
+                       /* (char  *) NULL */);
+        file 指定一个命令运行
+		arg... 要传输给应用程序的参数，这个参数必须要以NULL指针结尾
+                       
+int execle(const char *path, const char *arg, ...
+                       /*, (char *) NULL, char * const envp[] */);
+        path 指定一个应用程序的路径
+        arg... 要传输给应用程序的参数，这个参数必须要以NULL指针结尾
+        envp 他是一个字符串数组，这个参数的数据会通过environ传输给应用程序
+                       
+int execv(const char *path, char *const argv[]);
+       path 指定一个应用程序的路径
+       argv 传输参数的数组，数组的最后一个元素必须是NULL指针
+       
+int execvp(const char *file, char *const argv[]);
+int execvpe(const char *file, char *const argv[], char *const envp[]);
+                       
+网络命令：
+
+netstat  查看网络状态
+                       
+                       
+注意事项：
+	1，你调用exec系列函数的时候，如果成功，将会把原本的程序清空，然后再来运行新的程序
+	2，他一般跟vfork结合使用
+			
+	2，守护进程
+	1，加一个&号，代表是将这个程序扔到管理终端的后台中，不占用控制资源
+												
+	
+	
+无名管道pipe：
+	1，没有名字的
+	2，半双工
+	3，通过直系亲属访问继承
+	4，管道默认会阻塞
+	5，不能用lseek定位
+	6，操作没有原子性
+                       
+                       
+有名管道fifo：（文件）
+	1，有名字
+	2，全双工
+	3，可以没有亲属关系
+	4，管道默认会阻塞
+	5，不能用lseek定位
+	6，操作有原子性
+
+	
+	
+系统日志部分
+	
+#include <syslog.h>	
+openlog 函数打开日志,syslog 写入日志,closelog关闭日志。
+
+void openlog(const char *ident, int option, int facility);
+void syslog(int priority, const char *format, ...);
+void closelog(void);
+ 
+openlog 函数发起到系统日志服务器的连接，参数 ident 是要向每个消息加入的字符串，典型的情况是要设置成程序的名称。
+参数 option 是下面一个或多个值的“或”
+
+LOG_CONS	如果系统日志服务器不能用，写入控制台
+
+LOG_NDELAY	立即打开连接，正常情况下，直到发送第一条消息才打开连接
+
+LOG_PERROR	打印输出到stderr
+
+LOG_PID		每条消息中包含进程 PID
+
+
+参数 facitity 指定程序发送消息的类型。
+
+LOG_AUTHPRIV	安全授权消息
+
+LOG_CRON	时钟守护进程：cron和at
+
+LOG_DAEMON	其他系统守护进程
+
+LOG_KERN	内核消息
+
+LOG_LPR		打印机子系统
+
+LOG_MAIL	邮件子系统
+
+LOG_USER	默认
+
+ 
+参数 priority 指定消息的重要性。
+
+LOG_EMERG	系统不能使用
+
+LOG_ALERT	立即采取措施
+
+LOG_CRIT	紧急事件
+
+LOG_ERR		出错条件
+
+LOG_WARNING	警告条件
+
+LOG_NOTICE	正常但重大事件
+
+LOG_INFO	信息消息
+
+LOG_DEBUG	调试信息
+
+ 
+syslog 代码例子：
+yslog(LOG_INFO, "my daemin is OK");
+
+严格的说， openlog 和 closelog 是可选的，因为函数 syslog 在首次使用的时候自动打开日志文件。
+linux 系统上日志文件通常是/var/log/syslog。
+ 
+**************************************************************
+
+异步信号： 1，非实时信号 2，实时信号
+关于信号的详细说明参数 man 7 signal
+
+ps：    查看进程状态
+top：   “实时查看”
+pstree  树状查看
+
+kill 发送一个信号
+kill  -s   指定发送一个信号      进程的pid
+kill  -l   查看系统有什么信号
+killall：指定一个应用程序名字去发送信号
+
+linux 系统的信号
+ 1) SIGHUP	 2) SIGINT	 3) SIGQUIT	 4) SIGILL	 5) SIGTRAP
+ 6) SIGABRT	 7) SIGBUS	 8) SIGFPE	 9) SIGKILL	10) SIGUSR1
+11) SIGSEGV	12) SIGUSR2	13) SIGPIPE	14) SIGALRM	15) SIGTERM
+16) SIGSTKFLT	17) SIGCHLD	18) SIGCONT	19) SIGSTOP	20) SIGTSTP
+21) SIGTTIN	22) SIGTTOU	23) SIGURG	24) SIGXCPU	25) SIGXFSZ
+26) SIGVTALRM	27) SIGPROF	28) SIGWINCH	29) SIGIO	30) SIGPWR
+31) SIGSYS	34) SIGRTMIN	35) SIGRTMIN+1	36) SIGRTMIN+2	37) SIGRTMIN+3
+38) SIGRTMIN+4	39) SIGRTMIN+5	40) SIGRTMIN+6	41) SIGRTMIN+7	42) SIGRTMIN+8
+43) SIGRTMIN+9	44) SIGRTMIN+10	45) SIGRTMIN+11	46) SIGRTMIN+12	47) SIGRTMIN+13
+48) SIGRTMIN+14	49) SIGRTMIN+15	50) SIGRTMAX-14	51) SIGRTMAX-13	52) SIGRTMAX-12
+53) SIGRTMAX-11	54) SIGRTMAX-10	55) SIGRTMAX-9	56) SIGRTMAX-8	57) SIGRTMAX-7
+58) SIGRTMAX-6	59) SIGRTMAX-5	60) SIGRTMAX-4	61) SIGRTMAX-3	62) SIGRTMAX-2
+63) SIGRTMAX-1	64) SIGRTMAX
+
+其中 SIGKILL, SIGSTOP 只能按照系统默认动作执行，不能捕捉，阻塞及忽略
+
+前面31个是非实时信号：
+	1，每一个非实时信号对应一个信号名
+	2，每一个非实时信号基本上都会对应一个系统事件
+	3，信号有可能会丢失(在信号响应的过程前，来多一个同样的信号，这个信号将会被丢失)
+	4，嵌套响应
+
+后面的31个是实时信号：
+	1，信号不会丢失
+	2，优先级比非实时信号要高（在阻塞的情况下）
+	3，嵌套响应
+
+信号可以有以下设定：
+	1，捕捉
+	2，忽略
+	3，阻塞
+	4，按照默认动作
+
+	
+#include <signal.h>	
+signal 简单的信号处理函数
+
+typedef void (*sighandler_t)(int);
+
+sighandler_t signal(int signum, sighandler_t handler);
+
+	signum 你要设置的是哪个信号
+	handler 处理方式
+		1， SIG_IGN 忽略这个信号
+		2， SIG_DFL 按照默认动作执行这个信号
+		3， 如果他是一个函数，则是捕捉这个信号，收到这个信号的时候去执行这个函数
+返回值：
+		返回 SIG_ERR 则代表出错
+
+#include <sys/types.h>
+#include <signal.h>
+
+kill 发送一个信号给指定进程
+int kill(pid_t pid, int sig);
+	pid：指定进程的pid
+	sig：发送什么信号
+
+
+	
+#include <signal.h>
+复杂的信号处理函数：
+sigaction
+
+信号的阻塞：（在阻塞过程中，信号不会丢失，会被高高挂起，等解开阻塞的时候再响应）
+	
+/* Prototype for the glibc wrapper function */
+int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
+	how
+		SIG_BLOCK	添加信号集合里面的阻塞信号
+		SIG_UNBLOCK    解开阻塞
+		SIG_SETMASK    覆盖原本的设置，	把set信号集里面的信号设置到里面去
+
+	set 信号集合
+		信号集合操作函数，看下面
+
+	oldset 旧的集合会被存放到这里
+
+
+信号集合操作函数：
+int sigemptyset(sigset_t *set);           清空信号集的内容
+
+int sigfillset(sigset_t *set);            将所有信号填充进去信号集合
+
+int sigaddset(sigset_t *set, int signum); 设置signum这个信号到集合中
+
+int sigdelset(sigset_t *set, int signum); 从集合中删除signum这个信号
+
+int sigismember(const sigset_t *set, int signum); 判断signum信号有没有在集合中
+
+
+	
+信号：
+1，非实时信号（1-31）
+	1，不可靠信号
+	2，信号是有可能丢失的
+	3，非实时信号的产生都对应一个系统事件
+	4，嵌套执行
+	5，被阻塞信号是没有优先级
+	6，在挂起的信号中，信号的执行时乱序的
+	7，每一个信号都有一个默认的系统动作
+
+2，实时信号（34-64）
+	1，可靠的信号
+	2，信号是不会丢失的
+	3，嵌套执行
+	4，被挂起的信号是有优先级
+	5，被挂起时实时信号信号比非实时信号优先级要高
+	6，被挂起顺序执行信号的响应
+
+信号的处理（除了SIGKILL，SIGSTOP ）signal sigaction
+	1，忽略
+		signal(signum， SIG_IGN)
+	2，缺省（默认状态）
+		signal (signum， SIG_DFL)
+	3，捕捉
+		signal(signum, function)
+	4，阻塞（信号挂起）
+		设置阻塞之后，来了阻塞的指定信号，并不是将信号丢弃，而是将信号挂起，等到接触阻塞之后才去响应这个信号
+
+#include <signal.h>
+
+int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
+
+函数功能：
+设置信号的阻塞功能
+	how 想怎么样
+		SIG_BLOCK：
+			添加信号集合里面的信号进行阻塞（原本的设置上添加设置）
+		SIG_UNBLOCK：
+			解除信号集合里面的信号的阻塞
+		SIG_SETMASK：
+			直接阻塞信号集合里面的信号，原本的设置直接被覆盖
+
+	set 你想要设置的信号集合
+			int sigemptyset(sigset_t *set);
+			清空信号集合
+			int sigfillset(sigset_t *set);
+			将所有信号登记进集合里面
+			int sigaddset(sigset_t *set, int signum);
+			往集合里面添加signum信号
+			int sigdelset(sigset_t *set, int signum);
+			往集合里面删除signum信号
+			int sigismember(const sigset_t *set, int signum);
+			测试信号集合里面有无signum信号
+
+	oldset 旧的设置
+			如果这里是一个具体的指针，则将原本的设置保存在这里
+			如果这里是NULL则不做任何操作
+
+3，信号发送：
+	1，通过其他进程给自己
+	2，自己发给自己
+	3，信号如何发送：
+		kill -s 信号 进程号
+		killall -s 信号 应用
+
+
+4，信号的继承
+	1，信号初始化的设置是会被子进程继承的
+	2，信号的阻塞设置是会被子进程继承的
+	3，被挂起的信号是不会被子进程继承的
+
+5，信号处理函数里面应该注意的地方：
+	1，不应该在信号处理函数里面操作全局变量（如果要操作，记得加锁）
+	2，应该注意一下一些函数调用是否安全，可以查看man 7 signal （书本379）
+
+
+
+6，带参信号的处理与发送
+
+#include <signal.h>
+
+int sigaction(int signum, const struct sigaction *act,
+                     struct sigaction *oldact);
+信号注册函数（比signal复杂一点，功能上差不多）
+
+signum：注册那个信号
+act：信号活动结构体，用来登记对这个信号做什么处理
+struct sigaction {
+				void(*sa_handler)(int);	                        //不带参数的信号处理函数，默认执行这个不带参数的信号处理函数
+				void(*sa_sigaction)(int, siginfo_t *, void *);
+						                                        //带参的信号处理函数，如果你想要使能这个信号处理函数，需要设置一下sa_flags为SA_SIGINFO
+				sigset_t   sa_mask;                            //信号阻塞设置
+				这个值的意义是：
+				1，在信号处理函数执行的过程当中阻塞掉指定的信号，指定的信号过来将会被挂起，等函数结束后再执行
+				2，这个变量类型是sigset_t，所以在这里信号集合处理函数是通用的，类似于这些函数sigemptyset
+
+
+               int        sa_flags;		//信号的操作标识，详情函数参照书本内容
+               void     (*sa_restorer)(void);	//被遗弃的设置
+				};
+		oldact 原本的设置会被保存在这里，如果是NULL则不保存
+
+7，sigqueue
+	#include <signal.h>
+
+       int sigqueue(pid_t pid, int sig, const union sigval value);
+	函数功能：
+		发送一个带参信号（跟sigaction配套使用）
+	pid：发送给谁（进程ID号）
+	sig：发送什么信号
+	value：
+		这是一个共用体，发送给目标的附加信息
+			union sigval {
+               int   sival_int;
+               void *sival_ptr;
+           };
+		这个附加信息你可以在信号处理函数中的siginfo_t中查看到，分别对应：
+				int      si_int;      /* POSIX.1b signal */
+               			void    *si_ptr;      /* POSIX.1b signal */
+
+
+
+练习
+	1:忽略ctrl+c对程序的影响，当程序接收到信号SIGQUIT信号的时候打印helloworld
+
+	2:编写一段程序，创建两个子进程，
+		用signal让父进程捕捉SIGINT，
+		当捕获到SIGINT后，父进程用kill向两个子进程分别发信号，
+ 		发送SIGUSR1给子进程1， 发送SIGUSR2给子进程2
+		子进程捕捉到父进程发来的信号后，分别输入下列信息后终止
+		Child process 1 is killed by parent!
+		Child process 2 is killed by parent!
+		父进程等待两个子进程终止后，输出以下信息后终止 waitpid()
+		Parent process exit!
+
+**********************************************************************************
+
+IPC通信机制：
+	1，共享内存
+	2，消息队列
+	3，信号量
+	
+如何查看IPC机制使用情况
+	ipcs -a 查看所有IPC对象
+	ipcs -m 查看共享内存
+	ipcs -q 查看消息队列
+	ipcs -s 查看信号量
+
+删除某个IPC对象：
+	ipcrm -m id号
+	删除指定id号的共享内存
+	-q 则是删除消息队列
+	-s 删除信号量
+
+
+2，共享内存：
+	在内核空间中开辟一片内存，并且将其映射到虚拟内存中使用
+
+	int shmget(key_t key, size_t size, int shmflg);
+		获取或创建共享对象的ID号
+		key：IPC的key，我们依赖这个key来找到对应IPD通信对象
+
+		size：申请的内存大小（最好以PAGE_SIZE，4k对齐）
+
+		shmflg：
+			SHM_HUGETLB：大页面对齐
+			SHM_HUGE_2MB, SHM_HUGE_1GB：超大页面对齐
+
+			IPC_CREATE：如果不存在这个对象则创建它
+			IPC_EXCL：如果这个对象存在则报错
+			mode：创建对象权限
+		返回：
+			共享内存id
+
+	void *shmat(int shmid, const void *shmaddr, int shmflg);
+		映射共享内存到虚拟内存中
+		shmid：共享内存的ID
+		shmaddr：所指定映射到哪个内存地址中，NULL，则是系统自动选择
+		shmflg：对这块内存进行何种操作
+			0：代表正常操作
+			SHM_RND：规定shmaddr这个参数不能为NULL，代表指定到shmaddr这个地址中用大页面内存对齐的方式映射内存
+			SHM_EXEC：内存运行被执行
+			SHM_RDONLY：内存只读操作
+			SHM_REMAP：重新映射内存地址
+			
+
+        int shmdt(const void *shmaddr);
+		解除映射
+		shmaddr：解除映射的内存地址
+
+	int shmctl(int shmid, int cmd, struct shmid_ds *buf);
+		控制当前指定ID的共享内存信息
+		msqid：消息队列对象的ID值
+		cmd：参数书本388页
+
+
+3，消息队列：
+	增强型的管道，发送的信息是可以包含特殊标记的（mtype）
+
+	int msgget(key_t key, int msgflg);
+		key：IPC的key，我们依赖这个key来找到对应IPD通信对象
+		msgflg：
+			IPC_CREATE：如果不存在这个对象则创建它
+			IPC_EXCL：如果这个对象存在则报错
+			mode：创建对象权限
+		返回：
+			消息队列id
+
+	
+	int msgctl(int msqid, int cmd, struct msqid_ds *buf);
+		msqid：消息队列对象的ID值
+		cmd：参数书本383页
+
+	int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg);
+		msqid：消息队列的ID
+		msgp：发送的消息队列的内容
+			注意：	
+				1，消息队列默认把前面的long型大小内存当做是类型
+				2，系统里面为了让你的代码好看点，希望你定义一下结构体
+					struct msgbuf {
+               
+							long mtype;      存放消息的类型            
+							char mtext[100];   数据的内容，大小可以更改          
+							};
+		msgsz：数据的大小（包含数据类型的大小）
+		msgflg：
+			0：正常操作
+			IPC_NOWAIT：不阻塞的读取消息队列的内容，如果消息队列里面没有数据，返回值为-1，并且errno被设置成为ENOMSG
+			MSG_EXCEPT：读标志，不等于第一个数据的类型
+			MSG_NOERROR：当准备接受的消息比msgsz大的时候，将数据读取出来（截断读取），并且不报错
+			MSG_COPY：
+
+        ssize_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp,
+                      int msgflg);
+		msgtyp：指定消息类型
+		
+
+
+4，信号量：
+	一个定义在内核系统中的特殊的变量：
+		1，该变量最小为0，如果等于0的情况下还去进行P操作，就会阻塞
+		2，P操作就是减操作
+		3，V操作就是加操作
+
+
+	int semget(key_t key, int nsems, int semflg);
+
+	int semctl(int semid, int semnum, int cmd, ...);
+
+	int semop(int semid, struct sembuf *sops, unsigned nsops);
+
+
+
+
+5，posix的有名信号量：
+	跟IPC信号量的区别在于：
+		1，posix信号量只能单个操作，IPC信号量可以多个信号量同时操作，IPC信号量更加强大
+		2，编译的时候需要链接到 -lrt or -pthread
+
+
+	sem_t *sem_open(const char *name, int oflag);
+        sem_t *sem_open(const char *name, int oflag,
+                       mode_t mode, unsigned int value);
+
+
+	int sem_close(sem_t *sem);
+
+	int sem_post(sem_t *sem);
+		V操作
+	int sem_wait(sem_t *sem);
+		P操作
+
+	int sem_unlink(const char *name);
+		删除一个posix信号量文件
+
+
+	
+
+
+
+1,semget
+	#include <sys/types.h>
+       #include <sys/ipc.h>
+       #include <sys/sem.h>
+
+       int semget(key_t key, int nsems, int semflg);	//获取信号量的id
+		key：IPCkey值
+		nsems：你要申请多少个信号量，之后以数组的下标的形式去访问的
+		semflg：跟消息队列及共享内存是一样的
+			
+
+
+	
+2，semget：
+	#include <sys/types.h>
+       #include <sys/ipc.h>
+       #include <sys/sem.h>
+
+       int semctl(int semid, int semnum, int cmd, ...);
+		它的第四个参数根据第三个参数决定有没有，第四个参数的类型系统要求我们自己定义这么一个共用体
+	union semun {
+               int              val;    /* Value for SETVAL */
+               struct semid_ds *buf;    /* Buffer for IPC_STAT, IPC_SET */
+               unsigned short  *array;  /* Array for GETALL, SETALL */
+               struct seminfo  *__buf;  /* Buffer for IPC_INFO
+                                           (Linux-specific) */
+           };
+
+		semid：信号量的id
+		semnum：你要操作第几个信号量，用数组下标的形式访问的
+		cmd：
+			参照书本395页
+			SETVAL：引用第四个参数，用来设置信号量集合当中具体某个一个的值是多少
+					需要引用semun这个共用体当中的val来设置
+
+			IPC_RMID：删除信号量，不需要引用第四个参数
+					semctl函数里面的semnum写什么都无所谓，是被忽略的
+
+
+		
+				
+3，semop：用来PV操作的函数
+		P：减操作   V：加操作
+	#include <sys/types.h>
+       #include <sys/ipc.h>
+       #include <sys/sem.h>
+
+       int semop(int semid, struct sembuf *sops, size_t nsops);			
+		semid：信号量的ID
+		sops：你要进行的操作的结构体数组（）
+			struct sembuf长这个样子
+				unsigned short sem_num;  你要操作的信号量的下标
+           			short          sem_op;   用来加减运算（VP操作）
+           			short          sem_flg;  
+							里面如果为0则代表正常操作信号量
+							SEM_UNDO：如果这个变量被设置，则代表，当信号量的数据操作成功，会被系统记录
+							IPC_NOWAIT：不阻塞操作，失败errno会被设置为EAGAIN
+
+
+		nsops：这个sops结构体里面多少个元素
+			
+
+
+
+
+
+
+
+posix信号量：
+		有名信号量：
+			特点：
+				1，它每次只能操作一个信号量
+				2，每次操作只能+1或者-1
+				3，简单直接
+				4，有文件诞生
+					/dev/shm/sem.???
+
+		
+		sem_open：用来打开一个posix有名信号量
+			#include <fcntl.h>           /* For O_* constants */
+       			#include <sys/stat.h>        /* For mode constants */
+       			#include <semaphore.h>
+
+       			sem_t *sem_open(const char *name, int oflag);
+       			sem_t *sem_open(const char *name, int oflag,
+                       			mode_t mode, unsigned int value);
+
+
+			name：信号量文件的名字，默认会诞生在/dev/shm/sem.???
+			oflag：操作标志，跟open函数里面的等价
+			mode：如果引用创建，则给这个信号量文件赋予的权限
+			value：给信号量的初值		
+
+			返回值：
+				返回一个sem_t的地址，失败返回SEM_FAILED
+
+		sem_close：关闭一个posix有名型号量
+			int sem_close(sem_t *sem);
+				sem：信号量地址
+		sem_wait：P操作（减操作）
+				int sem_wait(sem_t *sem);
+				sem：信号量地址
+		sem_post：V操作（加操作）
+				int sem_post(sem_t *sem);
+				sem：信号量地址
+				
+	
+
+
+
+进程间通信：
+		本地域套接字（网络编程）	
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

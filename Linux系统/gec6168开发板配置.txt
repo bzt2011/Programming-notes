@@ -1,0 +1,87 @@
+第一步： 刷机
+
+1.打开SecureCRT,重启开发板，在3S内,按任意键进入uboot（命令：“erboot”重启）
+2.输入：fastboot  就会提示插入USB线
+3.检查是否安装了USB驱动
+4.进入刷机文件夹，看auto.bat，看里面的命令行是否跟文件夹里面的文件一样名字
+5.双击auto.bat，就在开始刷机了
+
+
+第二步： 设置6168开发板网络和NFS
+
+1.把网线插入到开发板中 
+2.配置开发的IP地址（临时配置，开发板重启后不再保存）
+ifconfig eth0 192.168.8.65 netmask 255.255.255.0
+
+3.测试开发板与ubuntu系统是否网络接通 
+ping 192.168.8.xxx  (xxx ubuntuIP地址)     例如：ping 192.168.8.5
+显示如下： 
+64 bytes from 192.168.8.5: seq=0 ttl=64 time=1.884 ms  则网络通了  
+
+4.在开发板中挂 ubuntu的 NFS 文件夹   （NFS：网络中的计算机之间通过TCP/IP网络共享资源）
+mount -o nolock 192.168.8.66:/home/tarena  /mnt   （192.168.8.66: Ubuntu的ip地址。/home/tarena: Ubuntu的目录）
+
+5.永久配置开发板的IP地址   注意！！  一定要根据要求操作，不然会把配置文件给损坏。（损坏之后只能从新刷机）
+配置命令如下： 
+echo  ifconfig eth0 192.168.8.65   >>  /etc/profile 
+(eth0：6168开发板网卡。 192.168.8.65: 6168开发板ip地址。  /etc/profile：要写入的路径文件)
+
+
+第三步：  SSH开发板配置步骤
+
+1.把 SSH_config.tar.bz 文件传送到开发板中 /   ( / : 根目录。 可以通过串口、U盘、NFS等方式将文件传送到开发板)
+
+2.解压开发板中的SSH_config.tar.bz 压缩包 
+tar -xzvf SSH_config.tar.bz  
+
+3.进入cd /SSH/openssh/ 文件夹中  
+执行./auto  脚本进行配置  
+
+4.设置自己的SSH 登录密码  
+passwd root 
+
+5.设置自己的SSH服务器的IP地址  
+echo  ifconfig eth0 192.168.8.65   >>  /etc/profile   (这步操作和 二.5 步相同，应该可以省略)
+
+6.把IOT程序给屏蔽  
+vi /etc/profile 
+删除或屏蔽  ./iot    保存退出 :wq  
+			
+7.重启开发板使SSH 生效  
+reboot
+
+8.检查是否配置成功： 
+
+ps  查看当前的进程 
+显示如下  则SSH 服务已经启动了 
+  128 root       0:00 /usr/local/sbin/sshd 
+
+9.使用SSH 服务器：   
+在ubuntu输入：ssh  root@192.168.8.65   （ root：6168开发板的的用户名。 192.168.8.65：开发板的IP地址）   
+
+上传文件到开发板中：
+scp  文件名    root@192.168.8.XXX:/ 
+
+例子： 
+scp  SSH_config.tar.bz   root@192.168.8.65:/  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
