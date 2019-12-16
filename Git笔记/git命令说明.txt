@@ -52,6 +52,11 @@ git merge dev       合并分支 dev
 
 
 
+
+
+
+
+
 Git 配置
 git config --global core.quotepath false  配置通过终端显示中文文件名
 ssh-keygen -t rsa -C 'bzt2011@foxmail.com' 生成 ssh 协议秘钥
