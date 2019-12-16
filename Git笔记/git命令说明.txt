@@ -1,14 +1,15 @@
 Git 常用指令
-git init      创建一个空的 Git 仓库或重新初始化一个已存在的仓库
-git clone []  克隆一个仓库到一个新目录 [克隆地址] （下载一个项目和他的整个历史代码）
-git pull      取回远程仓库的变化并和本地合并
-git add []    添加当前目录的所有文件到暂存区（ [.] 暂存全部，也可以是 [文件或目录]）
-git commit -m [] 提交暂存区到仓库区（ -m [版本说明] 创建一个版本，并添加版本说明）
-git push      推送代码到远程库
-git diff      显示缓存区和工作区的差异
-git checkout  切换到指定的分支
-git fetch     下载远程仓库的所有变动
-git merge     合并指定分支到当前分支
+git init           创建一个空的 Git 仓库或重新初始化一个已存在的仓库
+git clone []       克隆一个仓库到一个新目录 [克隆地址] （下载一个项目和他的整个历史代码）
+git pull           取回远程仓库的变化并和本地合并
+git add []         添加当前目录的所有文件到暂存区（ [.] 暂存全部，也可以是 [文件或目录]）
+git commit -m []   提交暂存区到仓库区（ -m [版本说明] 创建一个版本，并添加版本说明）
+git push           推送代码到远程库
+git push origin [] 推送代码到远程库的分支 [分支名]
+git diff           显示缓存区和工作区的差异
+git checkout       切换到指定的分支
+git fetch          下载远程仓库的所有变动
+git merge          合并指定分支到当前分支
 
 检查历史和状态
 git log                  显示提交日志（查看版本信息）
@@ -38,6 +39,8 @@ gir branch          查看当前有几个分支，并且在那个分支下工作
 gir branch []       新建分支， [分支名]
 git branch -d []    删除已合并的的分支 [分支名]
 git branch -D []    删除未合并的的分支 [分支名]
+git branch --set-upstream-to=origin/master master
+设置本地的 master 分支跟踪远程的 master 分支
 
 git checkout []     切换分支（切换到 [分支名] 分支）
 git checkout -b []  新建并切换分支（切换到 [分支名] 分支）
@@ -49,13 +52,21 @@ git merge dev       合并分支 dev
 
 
 
-
-
-
-
-
 Git 配置
 git config --global core.quotepath false  配置通过终端显示中文文件名
 ssh-keygen -t rsa -C 'bzt2011@foxmail.com' 生成 ssh 协议秘钥
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
